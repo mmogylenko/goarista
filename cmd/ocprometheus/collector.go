@@ -145,9 +145,8 @@ func (c *collector) update(addr string, message proto.Message) {
 				} else {
 					floatVal = vv
 				}
-				// if metric.ValuLabel {
-				// 	metric.labels[len(metric.labels)-1] = strVal
-				// }
+				// valuelabel needs to be defined to make this working
+				// metric.labels[len(metric.labels)-1] = strVal
 				lm := prometheus.MustNewConstMetric(metric.desc, prometheus.GaugeValue,
 					floatVal, metric.labels...)
 				c.metrics[src] = &labelledMetric{
