@@ -29,15 +29,17 @@ doesn't have (yet) support for exporter specified timestamps.
 Prometheus 2.0 will probably support timestamps.
 
 ## Mapping Metric String value into gauge
-```
-- name: linkStatus
+```yaml
+subscriptions:
+        - /Sysdb/interface/status
+metrics:
+        - name: linkStatus
           path: /Sysdb/interface/status/eth/phy/slice/1/intfStatus/(?P<interface>.+)/linkStatus
-          valuelabel: status
           defaultvalue: 2
           transformmetric: true
           transformvalues:
-            linkUp: 1
-            linkDown: 2
+          linkUp: 1
+          linkDown: 2
 ```
 If we get metric with string value eq. **linkUp** we set metric value to **1**. If **no mapping** then **defaultvalue** is a metric value.
 
