@@ -21,6 +21,7 @@ subscriptions:
         - /Sysdb/environment/archer/temperature/status
         - /Sysdb/hardware/archer/xcvr/status
         - /Sysdb/interface/config/eth
+        - /Sysdb/interface/status
 
 # Prometheus metrics configuration.
 # If you use named capture groups in the path, they will be extracted into labels with the same name.
@@ -79,3 +80,10 @@ metrics:
         - name: sfpFixedTemperature
           path: /Sysdb/hardware/archer/(xcvr)/status/all/(?P<intf>.+)/lastDomUpdateTime/(temperature)
           help: sfpFixedTemperature
+        - name: linkStatus
+          path: /Sysdb/interface/status/eth/phy/slice/1/intfStatus/(?P<interface>.+)/linkStatus
+          defaultvalue: 2
+          transformmetric: true
+          transformvalues:
+            linkUp: 1
+            linkDown: 2

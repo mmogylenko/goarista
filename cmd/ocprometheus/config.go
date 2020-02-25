@@ -54,6 +54,12 @@ type MetricDef struct {
 	// Does the metric store a string value
 	stringMetric bool
 
+	// Whether we need to transform string metric to int
+	TransformMetric bool
+
+	// Values to MAP strings to
+	TransformValues map[string]float64
+
 	// This map contains the metric descriptors for this metric for each device.
 	devDesc map[string]*prometheus.Desc
 
@@ -63,10 +69,12 @@ type MetricDef struct {
 
 // metricValues contains the values used in updating a metric
 type metricValues struct {
-	desc         *prometheus.Desc
-	labels       []string
-	defaultValue float64
-	stringMetric bool
+	desc            *prometheus.Desc
+	labels          []string
+	defaultValue    float64
+	stringMetric    bool
+	transformMetric bool
+	transformValues map[string]float64
 }
 
 // Parses the config and creates the descriptors for each path and device.
@@ -128,7 +136,7 @@ func (c *Config) getMetricValues(s source) *metricValues {
 				desc = def.desc
 			}
 			return &metricValues{desc: desc, labels: groups[1:], defaultValue: def.DefaultValue,
-				stringMetric: def.stringMetric}
+				stringMetric: def.stringMetric, transformMetric: def.TransformMetric, transformValues: def.TransformValues}
 		}
 	}
 

@@ -28,6 +28,25 @@ The timestamps from the notifications are not preserved since Prometheus uses a 
 doesn't have (yet) support for exporter specified timestamps.
 Prometheus 2.0 will probably support timestamps.
 
+## Mapping Metric String value into gauge
+```
+- name: linkStatus
+          path: /Sysdb/interface/status/eth/phy/slice/1/intfStatus/(?P<interface>.+)/linkStatus
+          valuelabel: status
+          defaultvalue: 2
+          transformmetric: true
+          transformvalues:
+            linkUp: 1
+            linkDown: 2
+```
+If we get metric with string value eq. **linkUp** we set metric value to **1**. If **no mapping** then **defaultvalue** is a metric value.
+
+It allows us to remove meaningless metrics (with a random metric value) like:
+```
+linkStatus{instance="router01",interface="Ethernet26/1",job="edge_switch"}	3
+linkStatus{instance="router01",interface="Ethernet27/1",job="edge_switch"}	144
+linkStatus{instance="router01",interface="Ethernet28/1",job="edge_switch"}	10
+```
 ## Usage
 
 See the `-help` output, but here's an example to push all the metrics defined

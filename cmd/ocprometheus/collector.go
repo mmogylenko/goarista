@@ -27,10 +27,12 @@ type source struct {
 // Since the labels are fixed per-path and per-device we can cache them here,
 // to avoid recomputing them.
 type labelledMetric struct {
-	metric       prometheus.Metric
-	labels       []string
-	defaultValue float64
-	stringMetric bool
+	metric          prometheus.Metric
+	labels          []string
+	defaultValue    float64
+	stringMetric    bool
+	transformMetric bool
+	transformValues map[string]float64
 }
 
 type collector struct {
@@ -121,7 +123,6 @@ func (c *collector) update(addr string, message proto.Message) {
 				floatVal = m.defaultValue
 				m.labels[len(m.labels)-1] = strVal
 			}
-
 			m.metric = prometheus.MustNewConstMetric(m.metric.Desc(), prometheus.GaugeValue,
 				floatVal, m.labels...)
 			c.m.Unlock()
@@ -136,8 +137,27 @@ func (c *collector) update(addr string, message proto.Message) {
 				update, device, path, value)
 			continue
 		}
-
 		if strUpdate {
+			if metric.transformMetric {
+				c.m.Lock()
+				if vv, ok := metric.transformValues[strVal]; !ok {
+					floatVal = metric.defaultValue
+				} else {
+					floatVal = vv
+				}
+				// if metric.ValuLabel {
+				// 	metric.labels[len(metric.labels)-1] = strVal
+				// }
+				lm := prometheus.MustNewConstMetric(metric.desc, prometheus.GaugeValue,
+					floatVal, metric.labels...)
+				c.metrics[src] = &labelledMetric{
+					metric:       lm,
+					labels:       metric.labels,
+					defaultValue: metric.defaultValue,
+					stringMetric: metric.stringMetric,
+				}
+				c.m.Unlock()
+			}
 			if !metric.stringMetric {
 				// Skip string updates for non string metrics
 				continue
@@ -146,18 +166,19 @@ func (c *collector) update(addr string, message proto.Message) {
 			floatVal = metric.defaultValue
 			metric.labels[len(metric.labels)-1] = strVal
 		}
-
 		// Save the metric and labels in the cache
-		c.m.Lock()
-		lm := prometheus.MustNewConstMetric(metric.desc, prometheus.GaugeValue,
-			floatVal, metric.labels...)
-		c.metrics[src] = &labelledMetric{
-			metric:       lm,
-			labels:       metric.labels,
-			defaultValue: metric.defaultValue,
-			stringMetric: metric.stringMetric,
+		if !metric.transformMetric {
+			c.m.Lock()
+			lm := prometheus.MustNewConstMetric(metric.desc, prometheus.GaugeValue,
+				floatVal, metric.labels...)
+			c.metrics[src] = &labelledMetric{
+				metric:       lm,
+				labels:       metric.labels,
+				defaultValue: metric.defaultValue,
+				stringMetric: metric.stringMetric,
+			}
+			c.m.Unlock()
 		}
-		c.m.Unlock()
 	}
 }
 
